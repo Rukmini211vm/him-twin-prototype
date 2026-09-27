@@ -1,0 +1,1530 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Him-Twin // Indian Antarctic Research Stations Digital Twin (Maitri & Bharati)</title>
+  <meta name="description" content="AI-enabled, offline-first Digital Twin platform for Maitri and Bharati Antarctic research stations providing infrastructure monitoring, energy management, predictive analytics, polar logistics tracking, and closed-loop command dispatch.">
+  
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Rajdhani:wght@500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+  <!-- Stylesheets -->
+  <link rel="stylesheet" href="css/styles.css">
+  <link rel="stylesheet" href="css/components.css">
+</head>
+<body>
+
+  <!-- ===================================================================
+       1. COMMAND HEADER & GLOBAL BAR
+       =================================================================== -->
+  <header class="command-header">
+    <div class="brand-section">
+      <div class="brand-logo" title="National Centre for Polar and Ocean Research (NCPOR) // Him-Twin"></div>
+      <div class="brand-title">
+        <h1>HIM-TWIN <span style="font-size: 0.95rem; color: var(--polar-ice); font-weight: 500;">// ANTARCTIC DIGITAL TWIN</span></h1>
+        <div class="brand-subtitle">
+          <span id="header-station-name">BHARATI STATION // LARSEMANN HILLS (69°24′S)</span>
+          <span>•</span>
+          <span style="color: var(--indian-saffron);">NCPOR INDIA</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Station Selector -->
+    <nav class="station-nav-selector" aria-label="Station Selector">
+      <button class="station-btn active" data-station="bharati" id="btn-station-bharati">
+        <span>🇮🇳 BHARATI</span>
+        <span class="badge">69°S</span>
+      </button>
+      <button class="station-btn" data-station="maitri" id="btn-station-maitri">
+        <span>🇮🇳 MAITRI</span>
+        <span class="badge">70°S</span>
+      </button>
+      <button class="station-btn" data-station="both" id="btn-station-both">
+        <span>🌐 DUAL OVERVIEW</span>
+      </button>
+    </nav>
+
+    <!-- Header Telemetry, Satellite Link & Action Controls -->
+    <div class="header-telemetry">
+      <div class="time-box">
+        <div class="time-item">
+          <span class="label">UTC TIME</span>
+          <span class="val" id="utc-clock">00:00:00 UTC</span>
+        </div>
+        <div class="time-item">
+          <span class="label">NEW DELHI (IST)</span>
+          <span class="val" id="ist-clock">00:00:00 IST</span>
+        </div>
+      </div>
+
+      <!-- Offline / Online Satellite Toggle -->
+      <div class="link-status-badge" id="link-status-toggle" title="Click to simulate Satellite Blackout / Local Edge Mode">
+        <div class="link-pulse"></div>
+        <span>SATELLITE LINK: GSAT-7 (98.4%)</span>
+      </div>
+
+      <!-- Actions -->
+      <div class="header-actions">
+        <button class="btn-tactical" id="btn-header-controls" title="Open Manual Input Controls Studio" style="border-color: var(--polar-cyan); color: var(--polar-cyan); background: rgba(0, 242, 254, 0.15);">
+          🎛 MANUAL CONTROLS
+        </button>
+        <button class="audio-ctrl active" id="btn-audio-toggle" title="Toggle Voice Alerts & Klaxons">
+          🔊 VOICE ALERTS ON
+        </button>
+        <button class="btn-tactical btn-sim" id="btn-launch-sim" title="Launch Interactive Emergency Simulation">
+          ▶ EMERGENCY SIMULATION
+        </button>
+        <button class="btn-tactical btn-sos" id="btn-header-sos" title="Broadcast General Emergency SOS">
+          🚨 SOS ALERT
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- ===================================================================
+       OFFLINE STORE & FORWARD BUFFER NOTIFICATION
+       =================================================================== -->
+  <div class="offline-sync-bar" id="offline-sync-bar">
+    <div style="display: flex; align-items: center; gap: 10px;">
+      <span style="font-size: 1.2rem;">📡</span>
+      <div>
+        <strong>OFFLINE EDGE OPERATION ENGAGED:</strong>
+        <span id="sync-status-text">Station edge processing active. Commands & sensor logs buffering locally.</span>
+      </div>
+    </div>
+    <div style="display: flex; align-items: center; gap: 10px;">
+      <span class="sync-count" id="sync-packet-count">0 Packets Buffered</span>
+      <button class="btn-tactical" id="btn-manual-sync" style="padding: 4px 10px; font-size: 0.75rem; background:#000;">
+        ⚡ FORCE SYNC NOW
+      </button>
+    </div>
+  </div>
+
+  <!-- ===================================================================
+       2. REAL-TIME METRIC RIBBON (6-CELL KPI BAR)
+       =================================================================== -->
+  <section class="metric-ribbon" aria-label="Key Station Telemetry">
+    <!-- Temp -->
+    <div class="ribbon-card" id="card-metric-temp">
+      <div class="ribbon-label">
+        <span>AMBIENT TEMPERATURE</span>
+        <span>🌡</span>
+      </div>
+      <div class="ribbon-val-row">
+        <div class="ribbon-val" id="metric-temp">-36.8°C</div>
+        <div class="ribbon-unit">EXTERIOR</div>
+      </div>
+      <div class="ribbon-sub" id="metric-windchill">Wind Chill -54.2°C</div>
+    </div>
+
+    <!-- Wind -->
+    <div class="ribbon-card" id="card-metric-wind">
+      <div class="ribbon-label">
+        <span>KATABATIC WIND SPEED</span>
+        <span>💨</span>
+      </div>
+      <div class="ribbon-val-row">
+        <div class="ribbon-val" id="metric-wind">46 kts</div>
+        <div class="ribbon-unit">85 km/h</div>
+      </div>
+      <div class="ribbon-sub warn" id="metric-wind-dir">SSW 195° (Gusts 62 kts)</div>
+    </div>
+
+    <!-- Power -->
+    <div class="ribbon-card" id="card-metric-power">
+      <div class="ribbon-label">
+        <span>MICROGRID POWER DEMAND</span>
+        <span>⚡</span>
+      </div>
+      <div class="ribbon-val-row">
+        <div class="ribbon-val" id="metric-power">82.5 kW</div>
+        <div class="ribbon-unit">400V 3Φ</div>
+      </div>
+      <div class="ribbon-sub" id="metric-dg-status">DG-1 Active (68kW) + Solar/Wind</div>
+    </div>
+
+    <!-- Fuel -->
+    <div class="ribbon-card" id="card-metric-fuel">
+      <div class="ribbon-label">
+        <span>FUEL RESERVE CAPACITY</span>
+        <span>🛢</span>
+      </div>
+      <div class="ribbon-val-row">
+        <div class="ribbon-val" id="metric-fuel">80.8%</div>
+        <div class="ribbon-unit">JET A-1</div>
+      </div>
+      <div class="ribbon-sub" id="metric-fuel-days">111.2 Days Autonomy</div>
+    </div>
+
+    <!-- Food -->
+    <div class="ribbon-card warning" id="card-metric-food">
+      <div class="ribbon-label">
+        <span>FOOD INVENTORY</span>
+        <span>🍞</span>
+      </div>
+      <div class="ribbon-val-row">
+        <div class="ribbon-val" id="metric-food">428 kg</div>
+        <div class="ribbon-unit">34 kg/day</div>
+      </div>
+      <div class="ribbon-sub warn" id="metric-food-days">12.5 Days (Convoy Bravo En-Route)</div>
+    </div>
+
+    <!-- Alerts -->
+    <div class="ribbon-card" id="card-metric-alerts">
+      <div class="ribbon-label">
+        <span>STATION STATUS & ALERTS</span>
+        <span>🛡</span>
+      </div>
+      <div class="ribbon-val-row">
+        <div class="ribbon-val" id="metric-alerts" style="color: var(--status-warning);">1</div>
+        <div class="ribbon-unit">ACTIVE ALERTS</div>
+      </div>
+      <div class="ribbon-sub" style="color: var(--status-nominal);">Crew: 23 Personnel Nominal</div>
+    </div>
+  </section>
+
+  <!-- ===================================================================
+       3. REAL-WORLD INTERACTIVE PROTOTYPE SHOWCASE & OPERATIONS CONSOLE
+       =================================================================== -->
+  <section class="omni-command-center" aria-label="Interactive Prototype Command Center">
+    <div class="omni-center-inner">
+
+      <!-- PROTOTYPE HERO SHOWCASE BANNER -->
+      <div class="prototype-showcase-banner">
+        <div class="prototype-banner-top">
+          <div class="prototype-tag-badge">
+            <span>🇮🇳</span>
+            <span>NCPOR POLAR DIGITAL TWIN // REAL-WORLD OPERATIONAL PROTOTYPE</span>
+          </div>
+          <div class="prototype-voice-status-pill" id="voice-status-global-pill" onclick="window.voiceAlerts.replayLast();" title="Click to test or replay mission dispatch voice audio">
+            <span>🔊</span>
+            <span id="voice-status-label">DISPATCH VOICE: ACTIVE (CLICK TO TEST)</span>
+          </div>
+        </div>
+
+        <h2 class="prototype-banner-title">
+          ANTARCTIC RESEARCH STATIONS // LIVE DIGITAL TWIN PROTOTYPE
+        </h2>
+        <p class="prototype-banner-desc">
+          Official prototype demonstration for <strong>Maitri (70°S)</strong> and <strong>Bharati (69°S)</strong> Antarctic stations. 
+          Experience real-world operations below: test operator queries (e.g., fuel dropping anomalies, pantry empty can audits, microgrid telemetry), listen to synthesized mission control voice alerts, and execute closed-loop station remediation.
+        </p>
+
+        <!-- 4-Stage Operational Pipeline Stepper -->
+        <div class="prototype-workflow-stepper">
+          <div class="workflow-step">
+            <div class="step-number">1</div>
+            <div class="step-content">
+              <div class="step-title">OPERATOR INPUT</div>
+              <div class="step-desc">Enter natural queries or click any real-world test scenario below.</div>
+            </div>
+          </div>
+          <div class="workflow-step">
+            <div class="step-number">2</div>
+            <div class="step-content">
+              <div class="step-title">AI EDGE TWIN</div>
+              <div class="step-desc">Real-time telemetry inference, anomaly detection & run-rate modeling.</div>
+            </div>
+          </div>
+          <div class="workflow-step">
+            <div class="step-number">3</div>
+            <div class="step-content">
+              <div class="step-title">SENSOR & CCTV OUTPUT</div>
+              <div class="step-desc">Live tank gauges, thermal FLIR cameras, and AI vision bounding boxes.</div>
+            </div>
+          </div>
+          <div class="workflow-step">
+            <div class="step-number">4</div>
+            <div class="step-content">
+              <div class="step-title">SYNTHESIZED VOICE DISPATCH</div>
+              <div class="step-desc">Authoritative spoken alerts broadcast to station intercom & radio.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ONE-CLICK REAL-WORLD TEST SCENARIOS (Direct User Guidance) -->
+      <div class="prototype-scenario-section">
+        <div class="scenario-section-header">
+          <div class="scenario-section-title">
+            <span>⚡</span>
+            <span>REAL-WORLD TEST SCENARIOS // ONE-CLICK PROTOTYPE VERIFICATION</span>
+          </div>
+          <div class="scenario-section-hint">
+            <span>Click any card below to test live prototype output & voice dispatch</span>
+          </div>
+        </div>
+
+        <div class="prototype-scenario-grid">
+          
+          <!-- Card 1: Fuel Status & Dropping Alert -->
+          <div class="prototype-scenario-card" style="border-top: 3px solid #ef4444;">
+            <div class="scenario-card-header">
+              <div class="scenario-icon-title">
+                <span class="scenario-icon" style="color: #ef4444;">🛢️</span>
+                <div>
+                  <div class="scenario-title">Fuel Depletion & Dropping Alert</div>
+                  <div style="font-size: 0.7rem; color: #94a3b8; font-family: var(--font-mono);">JET A-1 POLAR FUEL FARM</div>
+                </div>
+              </div>
+              <span class="scenario-badge critical">CRITICAL ALERT</span>
+            </div>
+            <div class="scenario-desc">
+              Inquire about station fuel. Triggers abnormal <strong>-46.5 L/hr drop anomaly</strong> (+28.3 L/hr leak spike), FLIR thermal leak camera inspection, and urgent spoken voice alert.
+            </div>
+            <button class="scenario-run-btn danger-btn" onclick="window.omniQuery.processQuery('how fuel is there (drop alert)');">
+              <span>▶ RUN: "how fuel is there (drop alert)"</span>
+              <span>⏎</span>
+            </button>
+          </div>
+
+          <!-- Card 2: Food & Empty Cans Alert -->
+          <div class="prototype-scenario-card" style="border-top: 3px solid #f59e0b;">
+            <div class="scenario-card-header">
+              <div class="scenario-icon-title">
+                <span class="scenario-icon" style="color: #fbbf24;">🥫</span>
+                <div>
+                  <div class="scenario-title">Food Rations & Empty Cans Audit</div>
+                  <div style="font-size: 0.7rem; color: #94a3b8; font-family: var(--font-mono);">FOOD STORAGE BAY 2</div>
+                </div>
+              </div>
+              <span class="scenario-badge popular">PANTRY AUDIT</span>
+            </div>
+            <div class="scenario-desc">
+              Inspect pantry rations. Optical scanner flags <strong>6 empty cans in bin</strong>, depleted canned meats, strictly limited canned rations (4 days left), and spoken voice alert.
+            </div>
+            <button class="scenario-run-btn warning-btn" onclick="window.omniQuery.processQuery('empty cans and food status');">
+              <span>▶ RUN: "empty cans & limited food alert"</span>
+              <span>⏎</span>
+            </button>
+          </div>
+
+          <!-- Card 3: Potable Water & Pipe Freeze -->
+          <div class="prototype-scenario-card" style="border-top: 3px solid #00f2fe;">
+            <div class="scenario-card-header">
+              <div class="scenario-icon-title">
+                <span class="scenario-icon" style="color: var(--polar-cyan);">💧</span>
+                <div>
+                  <div class="scenario-title">Potable Water & Trace Heating</div>
+                  <div style="font-size: 0.7rem; color: #94a3b8; font-family: var(--font-mono);">PRIYADARSHINI LAKE INTAKE</div>
+                </div>
+              </div>
+              <span class="scenario-badge nominal">LIFE SUPPORT</span>
+            </div>
+            <div class="scenario-desc">
+              Check 16,400 L reservoir, inspect 450m intake line sub-zero anti-freeze heating (+4.8°C), pump pressure, and spoken telemetry dispatch.
+            </div>
+            <button class="scenario-run-btn" onclick="window.omniQuery.processQuery('water status & pipe freeze');">
+              <span>▶ RUN: "water status & pipe freeze"</span>
+              <span>⏎</span>
+            </button>
+          </div>
+
+          <!-- Card 4: Power Grid & DG Failover -->
+          <div class="prototype-scenario-card" style="border-top: 3px solid #38bdf8;">
+            <div class="scenario-card-header">
+              <div class="scenario-icon-title">
+                <span class="scenario-icon" style="color: #38bdf8;">⚡</span>
+                <div>
+                  <div class="scenario-title">Microgrid Power & DG-1 Base Load</div>
+                  <div style="font-size: 0.7rem; color: #94a3b8; font-family: var(--font-mono);">3-PHASE HYBRID MICROGRID</div>
+                </div>
+              </div>
+              <span class="scenario-badge system">ENERGY GRID</span>
+            </div>
+            <div class="scenario-desc">
+              Analyze 82.5 kW load, 22.7 kW solar/wind renewable offset, 92% BESS battery autonomy, and listen to spoken microgrid status.
+            </div>
+            <button class="scenario-run-btn" onclick="window.omniQuery.processQuery('power grid & generator status');">
+              <span>▶ RUN: "power grid & generator status"</span>
+              <span>⏎</span>
+            </button>
+          </div>
+
+          <!-- Card 5: Katabatic Blizzard & Convoy Reroute -->
+          <div class="prototype-scenario-card" style="border-top: 3px solid #818cf8;">
+            <div class="scenario-card-header">
+              <div class="scenario-icon-title">
+                <span class="scenario-icon" style="color: #818cf8;">❄️</span>
+                <div>
+                  <div class="scenario-title">Katabatic Blizzard & Convoy Radar</div>
+                  <div style="font-size: 0.7rem; color: #94a3b8; font-family: var(--font-mono);">POLAR METAR & TRAVERSES</div>
+                </div>
+              </div>
+              <span class="scenario-badge popular">LOGISTICS</span>
+            </div>
+            <div class="scenario-desc">
+              Check -36.8°C ambient, -54°C wind chill, track Convoy Alpha (12k L fuel) and Convoy Bravo (2.4k kg rations) on GPS radar with voice alert.
+            </div>
+            <button class="scenario-run-btn" onclick="window.omniQuery.processQuery('convoy status & blizzard');">
+              <span>▶ RUN: "convoy radar & blizzard alert"</span>
+              <span>⏎</span>
+            </button>
+          </div>
+
+          <!-- Card 6: Crew Habitat Life Support -->
+          <div class="prototype-scenario-card" style="border-top: 3px solid #10b981;">
+            <div class="scenario-card-header">
+              <div class="scenario-icon-title">
+                <span class="scenario-icon" style="color: #10b981;">🩺</span>
+                <div>
+                  <div class="scenario-title">Expedition Crew & Habitat Vitals</div>
+                  <div style="font-size: 0.7rem; color: #94a3b8; font-family: var(--font-mono);">HABITAT LIFE SUPPORT</div>
+                </div>
+              </div>
+              <span class="scenario-badge nominal">CREW HEALTH</span>
+            </div>
+            <div class="scenario-desc">
+              Verify 23 personnel all active, +21.4°C indoor hydronic thermal balance, 20.9% O2, 418 ppm CO2 scrubbing, and spoken mission report.
+            </div>
+            <button class="scenario-run-btn" onclick="window.omniQuery.processQuery('crew life support & habitat');">
+              <span>▶ RUN: "crew life support & habitat"</span>
+              <span>⏎</span>
+            </button>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- MAIN TACTICAL SEARCH & COMMAND TERMINAL -->
+      <div class="omni-search-wrapper" style="position: relative;">
+        <div class="omni-search-bar-container">
+          <span class="omni-search-prefix">❯_</span>
+          <input
+            type="text"
+            id="omni-search-input"
+            class="omni-search-input"
+            placeholder="Type your question or command (e.g. 'how much fuel is left', 'empty cans alert', 'food status', 'water status', 'set temp -45')..."
+            autocomplete="off"
+            spellcheck="false"
+          >
+          <button class="omni-search-clear" id="omni-clear-btn" style="display:none" title="Clear">✕</button>
+          <button class="omni-exec-btn" id="omni-exec-btn" title="Execute Command">
+            <span>EXECUTE</span>
+            <span class="omni-exec-arrow">⏎</span>
+          </button>
+        </div>
+
+        <!-- Floating Autocomplete Palette -->
+        <div class="omni-autocomplete-dropdown" id="omni-autocomplete-dropdown">
+          <div class="autocomplete-group-title">🛢️ FUEL & PROPULSION DEMOS</div>
+          <div class="autocomplete-item" onclick="window.omniQuery.selectAutocomplete('how much fuel is there');">
+            <span class="autocomplete-item-text">how much fuel is there</span>
+            <span class="autocomplete-item-desc">Live tank reserves, burn rate & fuel dropping alert</span>
+          </div>
+          <div class="autocomplete-item" onclick="window.omniQuery.selectAutocomplete('simulate fuel dropping alert');">
+            <span class="autocomplete-item-text">simulate fuel dropping alert</span>
+            <span class="autocomplete-item-desc">Triggers rapid -46.5 L/hr drop anomaly & voice alert</span>
+          </div>
+          <div class="autocomplete-item" onclick="window.omniQuery.selectAutocomplete('show fuel cctv');">
+            <span class="autocomplete-item-text">show fuel cctv</span>
+            <span class="autocomplete-item-desc">Live FLIR thermal camera feed of bulk fuel farm</span>
+          </div>
+
+          <div class="autocomplete-group-title">🥫 FOOD, PANTRY & EMPTY CANS DEMOS</div>
+          <div class="autocomplete-item" onclick="window.omniQuery.selectAutocomplete('empty cans alert');">
+            <span class="autocomplete-item-text">empty cans alert</span>
+            <span class="autocomplete-item-desc">Detects 6 empty cans, depleted meat rations & voice alert</span>
+          </div>
+          <div class="autocomplete-item" onclick="window.omniQuery.selectAutocomplete('food status');">
+            <span class="autocomplete-item-text">food status</span>
+            <span class="autocomplete-item-desc">Pantry inventory audit, 12.5 days autonomy & greens harvest</span>
+          </div>
+          <div class="autocomplete-item" onclick="window.omniQuery.selectAutocomplete('show food cctv');">
+            <span class="autocomplete-item-text">show food cctv</span>
+            <span class="autocomplete-item-desc">Food storage bay camera with AI bounding boxes</span>
+          </div>
+
+          <div class="autocomplete-group-title">💧 WATER, POWER & WEATHER DEMOS</div>
+          <div class="autocomplete-item" onclick="window.omniQuery.selectAutocomplete('water status');">
+            <span class="autocomplete-item-text">water status</span>
+            <span class="autocomplete-item-desc">Priyadarshini lake reservoir & pipe trace heating</span>
+          </div>
+          <div class="autocomplete-item" onclick="window.omniQuery.selectAutocomplete('power status');">
+            <span class="autocomplete-item-text">power status</span>
+            <span class="autocomplete-item-desc">DG-1 generator load, solar/wind generation mix</span>
+          </div>
+          <div class="autocomplete-item" onclick="window.omniQuery.selectAutocomplete('convoy status');">
+            <span class="autocomplete-item-text">convoy status</span>
+            <span class="autocomplete-item-desc">PistenBully overland GPS radar & blizzard reroute</span>
+          </div>
+          <div class="autocomplete-item" onclick="window.omniQuery.selectAutocomplete('crew life support');">
+            <span class="autocomplete-item-text">crew life support</span>
+            <span class="autocomplete-item-desc">23 personnel vitals, +21°C indoor heat balance</span>
+          </div>
+          <div class="autocomplete-item" onclick="window.omniQuery.selectAutocomplete('show all cameras');">
+            <span class="autocomplete-item-text">show all cameras</span>
+            <span class="autocomplete-item-desc">5-camera surveillance matrix wall</span>
+          </div>
+        </div>
+
+        <!-- Typing hint / typewriter -->
+        <div class="omni-hint-row">
+          <span class="omni-hint-label">WHAT TO TYPE:</span>
+          <span class="omni-hint-text" id="omni-hint-text">Try "how fuel is there", "empty cans", "food status", "water status" or "set temp -50"</span>
+        </div>
+      </div>
+
+      <!-- Real-Time Voice Broadcast Equalizer Strip -->
+      <div class="omni-voice-broadcast-bar" id="omni-voice-broadcast-bar">
+        <div class="voice-broadcast-left">
+          <div class="omni-voice-eq active" id="omni-voice-eq">
+            <div class="bar"></div>
+            <div class="bar"></div>
+            <div class="bar"></div>
+            <div class="bar"></div>
+            <div class="bar"></div>
+          </div>
+          <div>
+            <div class="voice-broadcast-label">STATION AUDIO INTERCOM DISPATCH:</div>
+            <div class="omni-voice-broadcast-text" id="omni-voice-broadcast-text">
+              "Mission control ready for operator telemetry input."
+            </div>
+          </div>
+        </div>
+        <div class="voice-broadcast-actions">
+          <button class="action-btn-sm" onclick="window.voiceAlerts.replayLast();" title="Replay Spoken Announcement">
+            🔊 REPLAY VOICE
+          </button>
+          <button class="action-btn-sm" onclick="window.voiceAlerts.setMuted(!window.voiceAlerts.muted);" title="Mute/Unmute Audio">
+            🔇 TOGGLE MUTE
+          </button>
+        </div>
+      </div>
+
+      <!-- Interactive Output Stage -->
+      <div class="omni-output-container" id="omni-output-container" style="display:none; margin-top: 16px;"></div>
+
+    </div>
+  </section>
+
+  <!-- ===================================================================
+       4. MAIN OPERATIONS WORKSPACE
+       =================================================================== -->
+  <main class="main-dashboard">
+    <!-- PRIMARY WORK AREA -->
+    <section class="work-area">
+      <!-- NAVIGATION TABS -->
+      <div class="view-nav-tabs" role="tablist">
+        <button class="tab-btn active" data-tab="twin">
+          <span>🏛 INFRASTRUCTURE DIGITAL TWIN</span>
+        </button>
+        <button class="tab-btn" data-tab="controls" id="btn-tab-controls">
+          <span>🎛 TACTICAL INPUT & OVERRIDE STUDIO</span>
+        </button>
+        <button class="tab-btn" data-tab="logistics">
+          <span>🚜 POLAR LOGISTICS & CONVOY RADAR</span>
+        </button>
+        <button class="tab-btn" data-tab="cctv">
+          <span>📹 SURVEILLANCE CAMERAS (CCTV)</span>
+        </button>
+        <button class="tab-btn" data-tab="energy">
+          <span>⚡ ENERGY & POWER GRID</span>
+        </button>
+        <button class="tab-btn" data-tab="inventory">
+          <span>📦 RESOURCES & INVENTORY</span>
+        </button>
+        <button class="tab-btn" data-tab="ai">
+          <span>🤖 AI PREDICTIVE INTELLIGENCE</span>
+        </button>
+      </div>
+
+      <!-- TAB 1: 2.5D BLUEPRINT INFRASTRUCTURE TWIN -->
+      <div class="tab-content-panel active" id="tab-twin">
+        <div class="tactical-card">
+          <div class="twin-toolbar">
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <span style="font-family: var(--font-display); font-weight: 700; color: #ffffff; letter-spacing: 0.8px;">STATION ELEVATION & SCHEMATIC</span>
+              <span style="font-size: 0.72rem; color: #94a3b8;">// INTERACTIVE ASSET INSPECTION</span>
+            </div>
+            <div class="level-selector">
+              <button class="level-chip active" data-level="all">ALL MODULES</button>
+              <button class="level-chip" data-level="roof">ROOF / RADOME</button>
+              <button class="level-chip" data-level="level2">LEVEL 2 (LIVING)</button>
+              <button class="level-chip" data-level="level1">LEVEL 1 (LABS/MED)</button>
+              <button class="level-chip" data-level="level0">LEVEL 0 (POWER/FUEL)</button>
+            </div>
+          </div>
+
+          <div class="twin-viewer-container">
+            <div class="twin-canvas-wrapper" id="twin-svg-stage">
+              <!-- Rendered dynamically by digitalTwin.js -->
+            </div>
+            <div class="twin-legend">
+              <div class="legend-item"><div class="legend-dot green"></div> Nominal Operating</div>
+              <div class="legend-item"><div class="legend-dot amber"></div> Advisory / High Demand</div>
+              <div class="legend-item"><div class="legend-dot red"></div> Critical / Anomaly Alert</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB: TACTICAL INPUT & OVERRIDE STUDIO -->
+      <div class="tab-content-panel" id="tab-controls">
+        <div class="tactical-card">
+          <div class="card-header">
+            <div class="card-title">
+              <span class="icon">🎛</span>
+              <span>TACTICAL INPUT & OVERRIDE STUDIO // LIVE DIGITAL TWIN INTERACTION</span>
+            </div>
+            <div style="font-size: 0.75rem; color: var(--polar-cyan); font-family: var(--font-mono);">
+              INTERACTIVE PARAMETER INJECTION & REAL-TIME CLOSED LOOP
+            </div>
+          </div>
+          <div class="card-body">
+            <div style="font-size: 0.82rem; color: #cbd5e1; margin-bottom: 12px; background: rgba(0,242,254,0.06); padding: 8px 12px; border-radius: 6px; border-left: 3px solid var(--polar-cyan);">
+              <strong>OPERATOR INTERACTION MODE:</strong> Enter your own input values, adjust sliders, dispatch overland logistics, switch generators, or inject crisis scenarios below. Every adjustment directly updates telemetry, autonomy calculations, alerts, and map positions in real time!
+            </div>
+
+            <div class="control-studio-grid">
+              <!-- STATION 1: WEATHER & ENVIRONMENT SIMULATOR -->
+              <div class="input-section-card">
+                <div class="input-card-title">
+                  <span>❄ 1. POLAR WEATHER & ENVIRONMENT</span>
+                  <span class="input-val-badge" id="hud-station-tag">BHARATI</span>
+                </div>
+
+                <div class="input-group">
+                  <div class="input-label-row">
+                    <span>AMBIENT EXTERIOR TEMP (°C)</span>
+                    <span class="input-val-badge" id="val-ctrl-temp">-36.8°C</span>
+                  </div>
+                  <input type="range" class="tactical-slider" id="ctrl-temp" min="-70" max="-10" step="0.5" value="-36.8">
+                </div>
+
+                <div class="input-group">
+                  <div class="input-label-row">
+                    <span>KATABATIC WIND VELOCITY (KTS)</span>
+                    <span class="input-val-badge" id="val-ctrl-wind">46 kts</span>
+                  </div>
+                  <input type="range" class="tactical-slider" id="ctrl-wind" min="5" max="110" step="1" value="46">
+                </div>
+
+                <div class="input-group">
+                  <div class="input-label-row">
+                    <span>WIND CHILL CALCULATED</span>
+                    <span style="color:#ef4444; font-weight:bold; font-family:var(--font-mono);" id="val-ctrl-chill">-54.2°C</span>
+                  </div>
+                </div>
+
+                <div class="tactical-btn-row">
+                  <button class="action-btn-sm danger" id="ctrl-btn-blizzard">
+                    <span>🌪</span> TOGGLE WHITEOUT BLIZZARD
+                  </button>
+                </div>
+
+                <div class="quick-chip-container">
+                  <span style="font-size:0.7rem; color:#64748b; width:100%;">WEATHER PRESETS:</span>
+                  <button class="quick-chip" id="preset-weather-calm">Summer Calm (-18°C, 15kt)</button>
+                  <button class="quick-chip" id="preset-weather-nominal">Standard (-36°C, 46kt)</button>
+                  <button class="quick-chip" id="preset-weather-polar">Deep Freeze (-58°C, 75kt)</button>
+                </div>
+              </div>
+
+              <!-- STATION 2: MICROGRID & POWER DISPATCH -->
+              <div class="input-section-card amber">
+                <div class="input-card-title">
+                  <span>⚡ 2. MICROGRID POWER DISPATCH</span>
+                  <span class="input-val-badge" id="val-ctrl-netpower">BALANCED</span>
+                </div>
+
+                <div class="input-group">
+                  <div class="input-label-row">
+                    <span>DG-1 LOAD (PRIMARY DIESEL)</span>
+                    <span class="input-val-badge" id="val-ctrl-dg1">68 kW</span>
+                  </div>
+                  <input type="range" class="tactical-slider" id="ctrl-dg1-load" min="0" max="120" step="1" value="68">
+                </div>
+
+                <div class="input-group">
+                  <div class="input-label-row">
+                    <span>DG-2 STANDBY AUTO-START</span>
+                    <span class="input-val-badge" id="val-ctrl-dg2">0 kW</span>
+                  </div>
+                  <input type="range" class="tactical-slider" id="ctrl-dg2-load" min="0" max="100" step="1" value="0">
+                </div>
+
+                <div class="tactical-btn-row">
+                  <button class="action-btn-sm success" id="ctrl-btn-dg1-toggle">DG-1: RUNNING</button>
+                  <button class="action-btn-sm" id="ctrl-btn-dg2-toggle">DG-2: STANDBY</button>
+                </div>
+
+                <div class="input-group">
+                  <div class="input-label-row">
+                    <span>SOLAR PV HARVESTING (kW)</span>
+                    <span class="input-val-badge" id="val-ctrl-solar">14.5 kW</span>
+                  </div>
+                  <input type="range" class="tactical-slider" id="ctrl-solar" min="0" max="30" step="0.5" value="14.5">
+                </div>
+
+                <div class="input-group">
+                  <div class="input-label-row">
+                    <span>WIND TURBINE HARVESTING (kW)</span>
+                    <span class="input-val-badge" id="val-ctrl-windgen">8.2 kW</span>
+                  </div>
+                  <input type="range" class="tactical-slider" id="ctrl-windgen" min="0" max="30" step="0.5" value="8.2">
+                </div>
+
+                <div class="input-group">
+                  <div class="input-label-row">
+                    <span>HABITAT BASE ELECTRICAL DEMAND (kW)</span>
+                    <span class="input-val-badge" id="val-ctrl-demand">82.5 kW</span>
+                  </div>
+                  <input type="range" class="tactical-slider" id="ctrl-demand" min="40" max="150" step="1" value="82.5">
+                </div>
+              </div>
+
+              <!-- STATION 3: CONSUMABLES, FUEL & INVENTORY -->
+              <div class="input-section-card green">
+                <div class="input-card-title">
+                  <span>📦 3. FUEL, WATER & RATIONS INVENTORY</span>
+                  <span class="input-val-badge" id="val-ctrl-fueldays">111 DAYS</span>
+                </div>
+
+                <div class="input-group">
+                  <div class="input-label-row">
+                    <span>JET A-1 POLAR FUEL RESERVE (LITERS)</span>
+                    <span class="input-val-badge" id="val-ctrl-fuel">48,500 L</span>
+                  </div>
+                  <input type="range" class="tactical-slider" id="ctrl-fuel-range" min="1000" max="60000" step="500" value="48500">
+                </div>
+
+                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
+                  <div class="input-group">
+                    <label class="input-label-row">FOOD STOCK (KG)</label>
+                    <input type="number" class="tactical-input-text" id="ctrl-food-input" value="428">
+                  </div>
+                  <div class="input-group">
+                    <label class="input-label-row">POTABLE WATER (L)</label>
+                    <input type="number" class="tactical-input-text" id="ctrl-water-input" value="16400">
+                  </div>
+                </div>
+
+                <div class="input-group">
+                  <label class="input-label-row">CREW HEADCOUNT (CONSUMPTION BASE)</label>
+                  <input type="number" class="tactical-input-text" id="ctrl-crew-input" value="23" min="1" max="60">
+                </div>
+
+                <div class="quick-chip-container">
+                  <span style="font-size:0.7rem; color:#64748b; width:100%;">QUICK INVENTORY TRANSACTIONS:</span>
+                  <button class="quick-chip" id="btn-add-fuel-5k">+5,000 L Fuel Delivery</button>
+                  <button class="quick-chip" id="btn-add-food-1k">+1,500 kg Food Resupply</button>
+                  <button class="quick-chip" id="btn-drain-fuel-leak" style="color:#ef4444;">-15,000 L Fuel Leak Hazard</button>
+                </div>
+              </div>
+
+              <!-- STATION 4: ANOMALY INJECTION & DECISION SUPPORT -->
+              <div class="input-section-card red">
+                <div class="input-card-title">
+                  <span>🚨 4. CRISIS SCENARIO & STRESS TEST</span>
+                  <span class="input-val-badge" style="color:#ef4444; border-color:#ef4444;">ANOMALY INJECTOR</span>
+                </div>
+
+                <div style="font-size: 0.75rem; color:#94a3b8;">
+                  Inject real-time failure modes into the station to test digital twin detection, autonomous voice alert klaxons, and AI rerouting:
+                </div>
+
+                <div class="tactical-btn-row">
+                  <button class="action-btn-sm danger" id="btn-inject-blizzard" style="width:100%;">
+                    <span>🌪</span> 1. Inject Whiteout Blizzard Surge (88 kts)
+                  </button>
+                  <button class="action-btn-sm danger" id="btn-inject-fuel" style="width:100%;">
+                    <span>🛢</span> 2. Inject Critical Fuel Reserve Drop (14%)
+                  </button>
+                  <button class="action-btn-sm danger" id="btn-inject-gen" style="width:100%;">
+                    <span>⚙</span> 3. Trip Primary Diesel Generator DG-1
+                  </button>
+                  <button class="action-btn-sm danger" id="btn-inject-water" style="width:100%;">
+                    <span>❄</span> 4. Freeze Priyadarshini Water Intake Line
+                  </button>
+                </div>
+
+                <div style="margin-top: 8px;">
+                  <button class="action-btn-sm success" id="btn-resolve-all-anomalies" style="width:100%; justify-content:center; font-weight:700;">
+                    <span>🛡</span> RESET & RESTORE ALL SYSTEMS TO NOMINAL
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="tab-content-panel" id="tab-logistics">
+        <div class="tactical-card">
+          <div class="card-header">
+            <div class="card-title">
+              <span class="icon">📡</span>
+              <span>ANTARCTIC CONTINENTAL RADAR // VEHICLE GPS TRACKING & CARGO MOVEMENT</span>
+            </div>
+            <div style="font-family: var(--font-mono); font-size: 0.72rem; color: #38bdf8;">
+              TRAVERSE CORRIDOR: DAKSHIN GANGOTRI ⇄ MAITRI ⇄ BHARATI
+            </div>
+          </div>
+
+          <!-- INTERACTIVE CARGO FILTER RIBBON -->
+          <div class="cargo-filter-ribbon">
+            <span class="cargo-filter-label">🎯 TAP CARGO TO TRACK MOVEMENT:</span>
+            <button class="cargo-filter-btn" data-cargo="food">
+              <span>🥫</span> Food Cans & Pantry Rations
+            </button>
+            <button class="cargo-filter-btn" data-cargo="medicine">
+              <span>💊</span> Medicine & Trauma Supplies
+            </button>
+            <button class="cargo-filter-btn" data-cargo="fuel">
+              <span>⚡</span> Polar Jet A-1 Fuel
+            </button>
+            <button class="cargo-filter-btn" data-cargo="science">
+              <span>🔬</span> Deep Ice Core Samples
+            </button>
+            <button class="cargo-filter-btn" data-cargo="spares">
+              <span>⚙</span> DG Generator Spares
+            </button>
+            <button class="cargo-filter-btn" data-cargo="water">
+              <span>💧</span> Snowmelt Water Tanker
+            </button>
+            <button class="cargo-filter-btn active" data-cargo="all">
+              <span>🌐</span> All Moving Convoys
+            </button>
+          </div>
+
+          <!-- INTERACTIVE INPUT: ASK RADAR & TRACK CARGO -->
+          <div class="radar-query-container">
+            <div class="radar-query-row">
+              <input type="text" class="radar-query-input" id="radar-cargo-input" placeholder="Type cargo query... e.g. 'where is the food cans moving', 'track medicine', 'fuel distance', 'convoy alpha'..." />
+              <button class="radar-query-btn" id="btn-radar-cargo-search">
+                <span>🎯</span> TRACK CARGO & VEHICLE
+              </button>
+            </div>
+            <div class="radar-query-hints">
+              <span>⚡ Quick Queries:</span>
+              <span class="radar-hint-chip" data-query="where is the food cans moving">"where is the food cans moving"</span>
+              <span class="radar-hint-chip" data-query="track medicine supplies">"track medicine"</span>
+              <span class="radar-hint-chip" data-query="where is polar fuel sled">"where is polar fuel"</span>
+              <span class="radar-hint-chip" data-query="track ice core samples">"track ice cores"</span>
+            </div>
+          </div>
+
+          <!-- REAL-TIME CARGO TELEMETRY OUTPUT DISPLAY -->
+          <div class="cargo-telemetry-output" id="cargo-telemetry-card">
+            <div class="cargo-telemetry-header">
+              <div class="cargo-telemetry-title">
+                <span id="telemetry-vehicle-icon" style="font-size:1.3rem;">🥫</span>
+                <span id="telemetry-vehicle-name">Convoy Foxtrot (Pantry Resupply)</span>
+                <span id="telemetry-vehicle-status" class="convoy-status-tag">ACTIVE TRAVERSE (MOVING)</span>
+              </div>
+              <div style="font-family:var(--font-mono); font-size:0.75rem; color:#94a3b8;" id="telemetry-coords">
+                GPS: 69°24'S, 76°11'E // MOVING
+              </div>
+            </div>
+            <div class="cargo-telemetry-grid">
+              <div class="telemetry-tile">
+                <div class="telemetry-tile-label">📦 CARGO MANIFEST</div>
+                <div class="telemetry-tile-val" id="telemetry-cargo-desc" style="color:#fcd34d; font-size:0.82rem;">1,800 Cans of Preserved Meat, Lentils & Emergency Food Rations</div>
+              </div>
+              <div class="telemetry-tile">
+                <div class="telemetry-tile-label">📍 REMAINING DISTANCE</div>
+                <div class="telemetry-tile-val" id="telemetry-distance-val">18.6 km left <span style="font-size:0.7rem; color:#94a3b8;">/ 48 km total</span></div>
+                <div class="telemetry-progress-track">
+                  <div class="telemetry-progress-bar" id="telemetry-progress-bar" style="width: 61%;"></div>
+                </div>
+              </div>
+              <div class="telemetry-tile">
+                <div class="telemetry-tile-label">⏱ ESTIMATED TIME (ETA)</div>
+                <div class="telemetry-tile-val" id="telemetry-eta-val" style="color:#38bdf8;">53 mins</div>
+              </div>
+              <div class="telemetry-tile">
+                <div class="telemetry-tile-label">⚡ SPEED & VEHICLE</div>
+                <div class="telemetry-tile-val" id="telemetry-speed-val" style="font-size:0.82rem; color:#10b981;">21.0 km/h // Kässbohrer Polar 400</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="polar-map-container">
+            <canvas id="polar-canvas"></canvas>
+
+            <div class="polar-map-hud" id="map-hud-convoy">
+              <div class="hud-title">LOGISTICS TRACKING // Convoy Alpha (PB-300)</div>
+              <div>TYPE: Tracked PistenBully PB-300 + 4x Fuel Sleds</div>
+              <div>ORIGIN: Coastal Depot (DG) ➔ DEST: Maitri Station</div>
+              <div>CARGO: <span style="color:#38bdf8">12,000 L Arctic Jet A-1 Fuel</span></div>
+              <div>SPEED: 18.5 km/h | ETA: 3h 12m (54.8 km left)</div>
+              <div>RISK: <span style="color:var(--status-warning)">MODERATE (Katabatic Blizzard Sector 2)</span></div>
+            </div>
+
+            <!-- Active Convoy Selector -->
+            <div class="polar-convoy-list">
+              <div style="font-size: 0.72rem; font-family: var(--font-display); font-weight: bold; color: #94a3b8; letter-spacing: 0.8px;">
+                ACTIVE OVERLAND EXPEDITION CONVOYS
+              </div>
+            </div>
+          </div>
+
+          <!-- Interactive Convoy Dispatcher & Controller -->
+          <div style="margin-top: 14px; background: rgba(13, 22, 41, 0.88); border: 1px solid rgba(56, 189, 248, 0.25); border-radius: 8px; padding: 14px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 12px; border-bottom: 1px solid rgba(56, 189, 248, 0.15); padding-bottom: 6px;">
+              <span style="font-family: var(--font-display); font-size: 0.95rem; font-weight: bold; color: #ffffff;">🚜 DISPATCH NEW POLAR CONVOY & REAL-TIME TRAVERSE CONTROL</span>
+              <span style="font-size: 0.72rem; color: var(--polar-cyan); font-family: var(--font-mono);">GPS WAYPOINT ROUTING & CUSTOM DISTANCE</span>
+            </div>
+
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; margin-bottom: 12px;">
+              <div>
+                <label class="input-label-row">CONVOY CALL-SIGN / NAME</label>
+                <input type="text" class="tactical-input-text" id="convoy-input-name" value="Convoy Charlie (Arctic Carrier)">
+              </div>
+              <div>
+                <label class="input-label-row">VEHICLE CLASS</label>
+                <select class="tactical-select" id="convoy-input-vehicle">
+                  <option value="Tracked PistenBully PB-300 + Fuel Sleds">PistenBully PB-300 (Tracked)</option>
+                  <option value="Kässbohrer Heavy Transporter 400">Kässbohrer Heavy 400</option>
+                  <option value="Arctic Hägglunds BV-206 Carrier">Hägglunds BV-206 Amphibious</option>
+                  <option value="Polar Snowcat 250 Cargo">Polar Snowcat 250</option>
+                  <option value="Bell 412 Polar Air Cargo">Bell 412 Polar Air Bridge</option>
+                </select>
+              </div>
+              <div>
+                <label class="input-label-row">DESTINATION RESEARCH STATION</label>
+                <select class="tactical-select" id="convoy-input-dest">
+                  <option value="Maitri Station">Maitri Station (Queen Maud Land)</option>
+                  <option value="Bharati Station">Bharati Station (Larsemann Hills)</option>
+                </select>
+              </div>
+              <div>
+                <label class="input-label-row">CARGO CATEGORY</label>
+                <select class="tactical-select" id="convoy-input-cargotype">
+                  <option value="food">🥫 Food Cans (Pantry Rations & Protein)</option>
+                  <option value="medicine">💊 Critical Medicine & Trauma Serums</option>
+                  <option value="fuel">⚡ 10,000 L Arctic Jet A-1 Fuel</option>
+                  <option value="science">🔬 Deep Antarctic Ice Cores (-50°C)</option>
+                  <option value="spares">⚙ DG Spares & Heating Turbos</option>
+                  <option value="water">💧 5,000 L Potable Snowmelt Water</option>
+                </select>
+              </div>
+              <div>
+                <label class="input-label-row">STARTING DISTANCE FROM BASE</label>
+                <div style="display:flex; align-items:center; gap:8px;">
+                  <input type="range" class="tactical-slider" id="convoy-input-distance" min="10" max="250" step="5" value="65" style="flex:1;">
+                  <span class="input-val-badge" id="val-convoy-distance" style="min-width:55px;">65 km</span>
+                </div>
+              </div>
+              <div>
+                <label class="input-label-row">SPECIFIC CARGO MANIFEST</label>
+                <input type="text" class="tactical-input-text" id="convoy-input-manifest" value="1,800 Cans of Protein Rations & Canned Vegetables">
+              </div>
+            </div>
+
+            <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
+              <div style="display:flex; align-items:center; gap:10px;">
+                <span style="font-size:0.75rem; color:#94a3b8; font-family:var(--font-mono);">TRAVERSE SPEED:</span>
+                <input type="range" class="tactical-slider" id="convoy-input-speed" min="10" max="45" step="1" value="22" style="width:120px;">
+                <span class="input-val-badge" id="val-convoy-speed">22 km/h</span>
+              </div>
+              <div style="display:flex; gap:8px;">
+                <button class="action-btn-sm" id="btn-reroute-selected-convoy" style="border-color: #f59e0b; color: #f59e0b;">
+                  <span>🏔</span> REROUTE AROUND BLIZZARD
+                </button>
+                <button class="action-btn-sm success" id="btn-dispatch-new-convoy" style="font-weight:700;">
+                  <span>🚀</span> DISPATCH CONVOY TO RADAR
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB 3: VISUAL SURVEILLANCE WALL (CCTV) -->
+      <div class="tab-content-panel" id="tab-cctv">
+        <div class="tactical-card">
+          <div class="card-header">
+            <div class="card-title">
+              <span class="icon">📹</span>
+              <span>TACTICAL CCTV SURVEILLANCE & INFRARED MONITORING</span>
+            </div>
+            <div style="font-size: 0.75rem; color: #94a3b8;">
+              OPTICAL / FLIR THERMAL / NIGHT-VISION PHOSPHOR MODES
+            </div>
+          </div>
+          <div class="card-body">
+            <div class="camera-grid">
+              <!-- Cam 1: Bharati Station -->
+              <div class="cam-feed-card" id="cam-1">
+                <img src="assets/bharati_cam.jpg" alt="Bharati Station Exterior" class="cam-image">
+                <div class="cam-overlay-top">
+                  <div class="cam-rec-badge"><div class="cam-rec-dot"></div> CAM 01 // BHARATI PROMONTORY</div>
+                  <div class="offline-frame-stamp">CACHED OFFLINE FRAME</div>
+                </div>
+                <div class="cam-overlay-bottom">
+                  <div class="cam-timestamp">2026-09-09 20:50:12 UTC</div>
+                  <div class="cam-mode-switch">
+                    <button class="cam-mode-btn active" data-mode="normal">OPT</button>
+                    <button class="cam-mode-btn" data-mode="thermal">FLIR</button>
+                    <button class="cam-mode-btn" data-mode="nv">NVG</button>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Cam 2: Maitri Station -->
+              <div class="cam-feed-card" id="cam-2">
+                <img src="assets/maitri_cam.jpg" alt="Maitri Station Complex" class="cam-image">
+                <div class="cam-overlay-top">
+                  <div class="cam-rec-badge"><div class="cam-rec-dot"></div> CAM 02 // MAITRI CENTRAL OASIS</div>
+                  <div class="offline-frame-stamp">CACHED OFFLINE FRAME</div>
+                </div>
+                <div class="cam-overlay-bottom">
+                  <div class="cam-timestamp">2026-09-09 20:50:12 UTC</div>
+                  <div class="cam-mode-switch">
+                    <button class="cam-mode-btn active" data-mode="normal">OPT</button>
+                    <button class="cam-mode-btn" data-mode="thermal">FLIR</button>
+                    <button class="cam-mode-btn" data-mode="nv">NVG</button>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Cam 3: Convoy Alpha in Blizzard -->
+              <div class="cam-feed-card nightvision" id="cam-3">
+                <img src="assets/convoy_cam.jpg" alt="Polar Convoy Night Vision" class="cam-image">
+                <div class="cam-overlay-top">
+                  <div class="cam-rec-badge"><div class="cam-rec-dot"></div> CAM 03 // CONVOY ALPHA TRAVERSE</div>
+                  <div class="offline-frame-stamp">CACHED OFFLINE FRAME</div>
+                </div>
+                <div class="cam-overlay-bottom">
+                  <div class="cam-timestamp">2026-09-09 20:50:12 UTC</div>
+                  <div class="cam-mode-switch">
+                    <button class="cam-mode-btn" data-mode="normal">OPT</button>
+                    <button class="cam-mode-btn" data-mode="thermal">FLIR</button>
+                    <button class="cam-mode-btn active" data-mode="nv">NVG</button>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Cam 4: Generator & Fuel Storage Bay -->
+              <div class="cam-feed-card" id="cam-4">
+                <img src="assets/bharati_cam.jpg" alt="Power Generation & Fuel Bay" class="cam-image" style="transform: scale(1.3) translate(-10%, 15%);">
+                <div class="cam-overlay-top">
+                  <div class="cam-rec-badge"><div class="cam-rec-dot"></div> CAM 04 // POWER & FUEL BAY</div>
+                  <div class="offline-frame-stamp">CACHED OFFLINE FRAME</div>
+                </div>
+                <div class="cam-overlay-bottom">
+                  <div class="cam-timestamp">2026-09-09 20:50:12 UTC</div>
+                  <div class="cam-mode-switch">
+                    <button class="cam-mode-btn active" data-mode="normal">OPT</button>
+                    <button class="cam-mode-btn" data-mode="thermal">FLIR</button>
+                    <button class="cam-mode-btn" data-mode="nv">NVG</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB 4: ENERGY & POWER MANAGEMENT -->
+      <div class="tab-content-panel" id="tab-energy">
+        <div class="tactical-card">
+          <div class="card-header">
+            <div class="card-title">
+              <span class="icon">⚡</span>
+              <span>ENERGY DIGITAL TWIN // ARCTIC DIESEL MICROGRID & RENEWABLES</span>
+            </div>
+            <div style="font-size: 0.75rem; color: #38bdf8;">
+              SMART LOAD BALANCING // BESS 48V DC BUS
+            </div>
+          </div>
+          <div class="card-body">
+            <div class="resource-grid">
+              <!-- Generator Cluster -->
+              <div class="resource-card">
+                <div class="resource-header">
+                  <div class="resource-title"><span>⚙</span> DIESEL GENERATOR CLUSTER</div>
+                  <span style="font-family: var(--font-mono); font-size: 0.8rem; color: #10b981;">3-WAY N+2 REDUNDANCY</span>
+                </div>
+                <div style="display: flex; flex-direction: column; gap: 8px; font-size: 0.78rem;">
+                  <div style="display:flex; justify-content:space-between;">
+                    <span>DG-1 (Primary Base Load):</span>
+                    <span style="color:#38bdf8; font-family:var(--font-mono);">68.0 kW (18.2 L/h) - 94% Health</span>
+                  </div>
+                  <div style="display:flex; justify-content:space-between;">
+                    <span>DG-2 (Standby Auto-Start):</span>
+                    <span style="color:#10b981; font-family:var(--font-mono);">ARMED 0 kW - 98% Health</span>
+                  </div>
+                  <div style="display:flex; justify-content:space-between;">
+                    <span>DG-3 (Cold Reserve):</span>
+                    <span style="color:#64748b; font-family:var(--font-mono);">OFFLINE - 72% Health</span>
+                  </div>
+                </div>
+                <div class="resource-ai-badge">
+                  <span>💡</span>
+                  <span>AI: Heat recovery exchanger recaptures 44 kW thermal energy for habitat hydronic heating.</span>
+                </div>
+              </div>
+
+              <!-- Fuel Consumption & Depletion Prediction -->
+              <div class="resource-card">
+                <div class="resource-header">
+                  <div class="resource-title"><span>🛢</span> JET A-1 POLAR FUEL RUN-RATE</div>
+                  <span style="font-family: var(--font-mono); font-size: 0.8rem; color: #38bdf8;">AI DEPLETION MODEL</span>
+                </div>
+                <div class="resource-bar-track">
+                  <div class="resource-bar-fill" id="bar-fuel-fill" style="width: 80.8%;"></div>
+                </div>
+                <div class="resource-metric-row">
+                  <span>Daily Consumption: 436 L/day</span>
+                  <span>Reserve: 48,500 L</span>
+                </div>
+                <div class="resource-ai-badge warning">
+                  <span>⚠</span>
+                  <span>AI Prediction: At current thermal heating load (-36.8°C), minimum threshold (20%) will be reached in 82 days. Resupply buffer adequate.</span>
+                </div>
+              </div>
+
+              <!-- Renewable Mix: Solar & Wind -->
+              <div class="resource-card">
+                <div class="resource-header">
+                  <div class="resource-title"><span>☀️</span> HYBRID RENEWABLE GENERATION</div>
+                  <span style="font-family: var(--font-mono); font-size: 0.8rem; color: #10b981;">ACTIVE HARVESTING</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; font-size: 0.8rem; margin: 4px 0;">
+                  <div>Solar PV Array: <strong style="color:var(--polar-cyan);">14.5 kW</strong></div>
+                  <div>Wind Turbine: <strong style="color:var(--polar-cyan);">8.2 kW</strong></div>
+                </div>
+                <div class="resource-ai-badge">
+                  <span>⚡</span>
+                  <span>Total renewable offset: 22.7 kW (27.5% of total station load saved from diesel combustion).</span>
+                </div>
+              </div>
+
+              <!-- Battery Storage (BESS) -->
+              <div class="resource-card">
+                <div class="resource-header">
+                  <div class="resource-title"><span>🔋</span> BATTERY ENERGY STORAGE (BESS)</div>
+                  <span style="font-family: var(--font-mono); font-size: 0.8rem; color: #10b981;">92% SoC</span>
+                </div>
+                <div class="resource-bar-track">
+                  <div class="resource-bar-fill" style="width: 92%;"></div>
+                </div>
+                <div class="resource-metric-row">
+                  <span>Bus Voltage: 49.2 V DC</span>
+                  <span>Autonomy at Zero Gen: 6.4 Hours</span>
+                </div>
+                <div class="resource-ai-badge">
+                  <span>✓</span>
+                  <span>Battery thermal jacket active (+14°C) to prevent sub-zero capacity loss.</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB 5: RESOURCES & INVENTORY -->
+      <div class="tab-content-panel" id="tab-inventory">
+        <div class="tactical-card">
+          <div class="card-header">
+            <div class="card-title">
+              <span class="icon">📦</span>
+              <span>ESSENTIAL STATION INVENTORY & AUTONOMY CALCULATOR</span>
+            </div>
+            <div style="font-size: 0.75rem; color: #94a3b8;">
+              AUTOMATED RUN-RATE ESTIMATOR & CRITICAL WARNINGS
+            </div>
+          </div>
+          <div class="card-body">
+            <div class="resource-grid">
+              <!-- Food Stock -->
+              <div class="resource-card">
+                <div class="resource-header">
+                  <div class="resource-title"><span>🍞</span> FOOD RATIONS & PROVISIONS</div>
+                  <span style="font-family: var(--font-mono); font-size: 0.8rem; color: #f59e0b;">12.5 DAYS LEFT</span>
+                </div>
+                <div class="resource-bar-track">
+                  <div class="resource-bar-fill warning" style="width: 25%;"></div>
+                </div>
+                <div class="resource-metric-row">
+                  <span>Current Stock: 428 kg</span>
+                  <span>Burn: 34 kg/day (Crew 23)</span>
+                </div>
+                <div class="resource-ai-badge warning">
+                  <span>⚠</span>
+                  <span>CRITICAL ADVISORY: Food stock is below 15-day reserve. Convoy Bravo scheduled to deliver 2,400 kg rations within 42 minutes.</span>
+                </div>
+              </div>
+
+              <!-- Drinking Water & Snowmelt -->
+              <div class="resource-card">
+                <div class="resource-header">
+                  <div class="resource-title"><span>💧</span> POTABLE WATER & SNOWMELT</div>
+                  <span style="font-family: var(--font-mono); font-size: 0.8rem; color: #10b981;">19.3 DAYS BUFFER</span>
+                </div>
+                <div class="resource-bar-track">
+                  <div class="resource-bar-fill" id="bar-water-fill" style="width: 82%;"></div>
+                </div>
+                <div class="resource-metric-row">
+                  <span>Current Stock: 16,400 L</span>
+                  <span>Consumption: 850 L/day</span>
+                </div>
+                <div class="resource-ai-badge">
+                  <span>✓</span>
+                  <span>Priyadarshini water pipeline trace-heater nominal (+4.8°C). Snowmelt backup ready.</span>
+                </div>
+              </div>
+
+              <!-- Medical Oxygen -->
+              <div class="resource-card">
+                <div class="resource-header">
+                  <div class="resource-title"><span>🫁</span> MEDICAL OXYGEN CYLINDERS</div>
+                  <span style="font-family: var(--font-mono); font-size: 0.8rem; color: #10b981;">84 DAYS</span>
+                </div>
+                <div class="resource-bar-track">
+                  <div class="resource-bar-fill" style="width: 90%;"></div>
+                </div>
+                <div class="resource-metric-row">
+                  <span>Available: 18 Cylinders (150 bar)</span>
+                  <span>Medical ICU status: Ready</span>
+                </div>
+                <div class="resource-ai-badge">
+                  <span>✓</span>
+                  <span>Pressure manifold stable. Dedicated emergency hyperbaric reserve verified.</span>
+                </div>
+              </div>
+
+              <!-- Critical Spares & Maintenance Parts -->
+              <div class="resource-card">
+                <div class="resource-header">
+                  <div class="resource-title"><span>🔧</span> CRITICAL SPARES & FILTERS</div>
+                  <span style="font-family: var(--font-mono); font-size: 0.8rem; color: #10b981;">NOMINAL</span>
+                </div>
+                <div style="font-size: 0.75rem; display:flex; flex-direction:column; gap:4px;">
+                  <div>• Generator Diesel Fuel Filters: <strong>14 Sets</strong></div>
+                  <div>• PistenBully Track Links: <strong>24 Spares</strong></div>
+                  <div>• Trace-Heating Wire Elements: <strong>120 meters</strong></div>
+                </div>
+                <div class="resource-ai-badge">
+                  <span>✓</span>
+                  <span>Critical maintenance spares inventory meets wintering-over contingency requirements.</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB 6: AI PREDICTIVE INTELLIGENCE -->
+      <div class="tab-content-panel" id="tab-ai">
+        <div class="tactical-card">
+          <div class="card-header">
+            <div class="card-title">
+              <span class="icon">🤖</span>
+              <span>AI PREDICTIVE MONITORING & RISK DECISION PIPELINE</span>
+            </div>
+            <div style="font-size: 0.75rem; color: #38bdf8;">
+              AUTONOMOUS CORRELATION: METRICS ➔ PREDICTION ➔ RISK ➔ ACTION
+            </div>
+          </div>
+          <div class="card-body">
+            <div class="ai-prediction-stream">
+              <!-- Prediction Card 1: Fuel -->
+              <div class="ai-pipeline-card critical">
+                <div class="pipeline-step-flow">
+                  <span class="pipeline-chip">CURRENT CONDITION: Maitri Fuel 18.6%</span>
+                  <span class="pipeline-arrow">➔</span>
+                  <span class="pipeline-chip">PREDICTED: Critical reserve reached in 72h</span>
+                  <span class="pipeline-arrow">➔</span>
+                  <span class="pipeline-chip" style="color:#ef4444; font-weight:bold;">RISK: HIGH (Habitat Heating Hazard)</span>
+                  <span class="pipeline-arrow">➔</span>
+                  <span class="pipeline-chip" style="color:#38bdf8;">RECOMMENDED: Emergency Convoy Resupply</span>
+                </div>
+                <div style="font-size: 0.78rem; color: #cbd5e1;">
+                  AI Model predicts rapid depletion acceleration as blizzard wind chill (-61°C) will force habitat heating demand from 74 kW to 92 kW. Resupply protocol triggered.
+                </div>
+                <button class="ai-action-btn" onclick="window.simulationEngine.runScenario1FuelCrisis()">
+                  ⚡ EXECUTE EMERGENCY FUEL DISPATCH ACTION
+                </button>
+              </div>
+
+              <!-- Prediction Card 2: Priyadarshini Line -->
+              <div class="ai-pipeline-card warning">
+                <div class="pipeline-step-flow">
+                  <span class="pipeline-chip">CURRENT CONDITION: Line Temp -2.1°C</span>
+                  <span class="pipeline-arrow">➔</span>
+                  <span class="pipeline-chip">PREDICTED: Ice crystal accumulation within 4.5h</span>
+                  <span class="pipeline-arrow">➔</span>
+                  <span class="pipeline-chip" style="color:#f59e0b; font-weight:bold;">RISK: MODERATE (Water Blockage)</span>
+                  <span class="pipeline-arrow">➔</span>
+                  <span class="pipeline-chip" style="color:#38bdf8;">RECOMMENDED: Engage Trace Cable 2</span>
+                </div>
+                <div style="font-size: 0.78rem; color: #cbd5e1;">
+                  Thermal dissipation rate along the 450m unshielded lake intake exceeds primary trace cable wattage. Auxiliary heating circuit activation recommended.
+                </div>
+                <button class="ai-action-btn" onclick="window.commandSystem.sendCommand('ENGAGE: Auxiliary Trace-Heating Cable 2 on Priyadarshini Line')">
+                  ⚡ ENGAGE AUXILIARY TRACE HEATER
+                </button>
+              </div>
+
+              <!-- Prediction Card 3: Logistics Blizzard -->
+              <div class="ai-pipeline-card">
+                <div class="pipeline-step-flow">
+                  <span class="pipeline-chip">CURRENT CONDITION: Katabatic Gusts 62 kts</span>
+                  <span class="pipeline-arrow">➔</span>
+                  <span class="pipeline-chip">PREDICTED: +4.2h Traverse Delay for Convoy Alpha</span>
+                  <span class="pipeline-arrow">➔</span>
+                  <span class="pipeline-chip" style="color:#38bdf8; font-weight:bold;">RISK: LOW-MODERATE</span>
+                  <span class="pipeline-arrow">➔</span>
+                  <span class="pipeline-chip" style="color:#10b981;">RECOMMENDED: Shift to Ridge Waypoint</span>
+                </div>
+                <div style="font-size: 0.78rem; color: #cbd5e1;">
+                  Satellite radar indicates sastrugi drift height increasing by 0.6m in moraine valley. Rerouting convoy onto elevated blue ice ridge cuts traverse time by 1.8 hours.
+                </div>
+                <button class="ai-action-btn" onclick="window.commandSystem.sendCommand('REROUTE CONVOY ALPHA: Direct via Blue Ice Ridge Path')">
+                  ⚡ AUTHORIZE AI REROUTE WAYPOINT
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================================================================
+         TACTICAL SIDEBAR (STATUS, TWO-WAY COMMAND CONSOLE, ALERTS)
+         =================================================================== -->
+    <aside class="tactical-sidebar">
+      <!-- STATION ENVIRONMENTAL HUD -->
+      <div class="tactical-card">
+        <div class="card-header">
+          <div class="card-title">
+            <span class="icon">❄</span>
+            <span>POLAR ENVIRONMENT</span>
+          </div>
+          <span style="font-size: 0.7rem; color: #38bdf8; font-family: var(--font-mono);">METAR LIVE</span>
+        </div>
+        <div class="card-body" style="font-size: 0.78rem; display: flex; flex-direction: column; gap: 8px;">
+          <div style="display:flex; justify-content:space-between;">
+            <span style="color:#94a3b8;">Surface / Ice Condition:</span>
+            <span style="font-weight:600; color:#38bdf8;">Permanent Fast Ice</span>
+          </div>
+          <div style="display:flex; justify-content:space-between;">
+            <span style="color:#94a3b8;">Visibility Range:</span>
+            <span style="font-weight:600; color:#f59e0b;">420 m (Advisory)</span>
+          </div>
+          <div style="display:flex; justify-content:space-between;">
+            <span style="color:#94a3b8;">Geomagnetic Index:</span>
+            <span style="font-weight:600; color:#10b981;">Kp 3.2 (HF Stable)</span>
+          </div>
+          <div style="display:flex; justify-content:space-between;">
+            <span style="color:#94a3b8;">Sun Elevation:</span>
+            <span style="font-weight:600; color:#cbd5e1;">+14.8° (Summer Season)</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- TWO-WAY MONITORING & CLOSED-LOOP COMMAND CONSOLE -->
+      <div class="tactical-card">
+        <div class="card-header">
+          <div class="card-title">
+            <span class="icon">📡</span>
+            <span>INDIA ⇄ STATION COMMAND</span>
+          </div>
+          <span style="font-size: 0.7rem; color: var(--status-nominal); font-family: var(--font-mono);">ENCRYPTED</span>
+        </div>
+        <div class="card-body">
+          <div class="command-console">
+            <div style="font-size: 0.72rem; color: #94a3b8;">
+              DISPATCH OPERATIONAL DIRECTIVES WITH CLOSED-LOOP HANDSHAKE:
+            </div>
+            <div class="command-dispatch-bar">
+              <select class="command-select" id="cmd-select" aria-label="Operational Command Selector">
+                <option value="Dispatch Fuel Sled Convoy Alpha to Maitri">🚛 Dispatch Fuel Sled Convoy Alpha</option>
+                <option value="Switch Primary Power Bus to DG-2 Standby">⚡ Switch Power Bus to DG-2 Standby</option>
+                <option value="Throttle HVAC to Winter Eco-Conservation">🌡 Throttle Habitat HVAC to Eco Mode</option>
+                <option value="Engage Auxiliary Trace-Heater on Lake Line">❄ Engage Priyadarshini Trace Cable</option>
+                <option value="Request High-Resolution Telemetry Burst">📊 Request Edge Telemetry Sync Burst</option>
+                <option value="Acknowledge and Clear Active Station SOS">🛡 Acknowledge & Reset SOS Alarm</option>
+              </select>
+              <button class="btn-dispatch" id="btn-dispatch-cmd">
+                SEND
+              </button>
+            </div>
+
+            <!-- Custom User Command Input Field -->
+            <div class="custom-cmd-row">
+              <input type="text" class="custom-cmd-input" id="custom-cmd-input" placeholder="Enter custom command (e.g. Set DG-1 to 75kW)...">
+              <button class="btn-dispatch" id="btn-custom-cmd-send">EXEC</button>
+            </div>
+
+            <!-- Quick Action Clickable Directive Chips -->
+            <div class="quick-chip-container" style="margin-top: 6px;">
+              <button class="quick-chip cmd-quick-chip" data-cmd="Engage Auxiliary Trace-Heater on Priyadarshini Line">❄ Heat Water</button>
+              <button class="quick-chip cmd-quick-chip" data-cmd="Switch Primary Power Bus to DG-2 Standby">⚡ DG-2 Start</button>
+              <button class="quick-chip cmd-quick-chip" data-cmd="Emergency Fuel Resupply Transfer (+8000L)">🛢 +8kL Fuel</button>
+              <button class="quick-chip cmd-quick-chip" data-cmd="Reroute Convoy Alpha via Blue Ice Ridge Path">🏔 Reroute Alpha</button>
+              <button class="quick-chip cmd-quick-chip" data-cmd="Acknowledge and Clear Active Station SOS" style="color:var(--status-nominal);">🛡 Reset SOS</button>
+            </div>
+
+            <!-- Command History & Acknowledgement Audit -->
+            <div class="command-history-list" id="command-history-list">
+              <!-- Filled dynamically by commandSystem.js -->
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ACTIVE ALERTS FEED -->
+      <div class="tactical-card">
+        <div class="card-header">
+          <div class="card-title">
+            <span class="icon">🚨</span>
+            <span>STATION ALERT LOG</span>
+          </div>
+          <span style="font-size: 0.7rem; color: var(--status-warning);">LIVE FEED</span>
+        </div>
+        <div class="card-body" style="display:flex; flex-direction:column; gap:8px; max-height:220px; overflow-y:auto;">
+          <div style="background: rgba(245, 158, 11, 0.1); border-left: 3px solid #f59e0b; padding: 6px 10px; border-radius: 4px; font-size: 0.75rem;">
+            <div style="display:flex; justify-content:space-between; font-weight:bold; color:#f59e0b;">
+              <span>FOOD STOCK WARNING</span>
+              <span style="font-size: 0.68rem; color:#94a3b8;">14:18 UTC</span>
+            </div>
+            <div style="color:#cbd5e1; margin-top:2px;">Bharati food inventory at 428 kg (12.5 days left). Resupply convoy approaching.</div>
+          </div>
+          <div style="background: rgba(239, 68, 68, 0.1); border-left: 3px solid #ef4444; padding: 6px 10px; border-radius: 4px; font-size: 0.75rem;">
+            <div style="display:flex; justify-content:space-between; font-weight:bold; color:#ef4444;">
+              <span>MAITRI FUEL BELOW 20%</span>
+              <span style="font-size: 0.68rem; color:#94a3b8;">13:42 UTC</span>
+            </div>
+            <div style="color:#cbd5e1; margin-top:2px;">Current level 18.6%. 72-hour storm buffer warning issued. Priority resupply triggered.</div>
+          </div>
+        </div>
+      </div>
+    </aside>
+  </main>
+
+  <!-- ===================================================================
+       4. ASSET INSPECTION SLIDE-OUT DRAWER
+       =================================================================== -->
+  <aside class="asset-drawer" id="asset-drawer" aria-label="Asset Digital Twin Drawer">
+    <div class="drawer-header">
+      <div>
+        <div class="drawer-title" id="drawer-asset-title">Asset Name</div>
+        <div style="font-size: 0.72rem; color: #38bdf8; font-family: var(--font-mono);" id="drawer-asset-status">Nominal</div>
+      </div>
+      <button class="drawer-close" id="drawer-close-btn">&times;</button>
+    </div>
+    <div class="drawer-body">
+      <!-- Health Score Gauge -->
+      <div class="health-gauge-card">
+        <div>
+          <div style="font-size: 0.72rem; color: #94a3b8; text-transform: uppercase;">Asset Health Index</div>
+          <div class="gauge-val-big" id="drawer-health-val">96%</div>
+          <div style="font-size: 0.72rem; color: #38bdf8;">MTBF Risk: LOW (&lt;2% failure probability)</div>
+        </div>
+        <div style="font-size: 2.2rem;">🛡</div>
+      </div>
+
+      <!-- Telemetry Trend Sparkline -->
+      <div>
+        <div style="font-size: 0.75rem; color: #94a3b8; margin-bottom: 6px; font-weight: 600;">REAL-TIME TELEMETRY VIBRATION / LOAD SPARKLINE</div>
+        <div class="drawer-chart-container">
+          <canvas id="drawer-chart-canvas"></canvas>
+        </div>
+      </div>
+
+      <!-- Live Sensor Readouts Table -->
+      <div>
+        <div style="font-size: 0.75rem; color: #94a3b8; margin-bottom: 6px; font-weight: 600;">ACTIVE TELEMETRY SENSORS</div>
+        <div class="telemetry-grid-drawer" id="drawer-sensor-list">
+          <!-- Filled dynamically -->
+        </div>
+      </div>
+
+      <!-- Description & Specs -->
+      <div>
+        <div style="font-size: 0.75rem; color: #94a3b8; margin-bottom: 6px; font-weight: 600;">ENGINEERING SPECIFICATIONS</div>
+        <p id="drawer-asset-desc" style="font-size: 0.78rem; color: #cbd5e1; line-height: 1.5;"></p>
+      </div>
+
+      <!-- Interactive Asset Override Controls -->
+      <div style="background: rgba(10, 17, 33, 0.85); border: 1px solid rgba(56, 189, 248, 0.2); border-radius: 6px; padding: 10px; margin-top: 6px;">
+        <div style="font-size: 0.72rem; color: #94a3b8; font-family: var(--font-mono); margin-bottom: 6px;">OPERATIONAL OVERRIDE & SETPOINT</div>
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 6px;">
+          <span style="font-size: 0.75rem; color: #cbd5e1;">Operating Throttle / Duty:</span>
+          <span class="input-val-badge" id="drawer-throttle-val">100%</span>
+        </div>
+        <input type="range" class="tactical-slider" id="drawer-throttle-slider" min="0" max="120" step="5" value="100">
+        
+        <div style="display: flex; gap: 6px; margin-top: 8px;">
+          <select class="tactical-select" id="drawer-status-select" style="padding: 4px 8px; font-size: 0.75rem;">
+            <option value="nominal">Status: NOMINAL</option>
+            <option value="advisory">Status: HIGH LOAD / ADVISORY</option>
+            <option value="maintenance">Status: SCHEDULED MAINTENANCE</option>
+            <option value="critical">Status: CRITICAL ANOMALY</option>
+          </select>
+          <button class="action-btn-sm success" id="btn-apply-drawer-ctrl" style="white-space: nowrap;">
+            APPLY
+          </button>
+        </div>
+      </div>
+
+      <!-- Control Actions -->
+      <div style="margin-top: auto; display: flex; flex-direction: column; gap: 8px; padding-top: 10px;">
+        <button class="btn-tactical" style="width: 100%; justify-content: center; background: rgba(0, 242, 254, 0.2); border-color: var(--polar-cyan);" onclick="window.commandSystem.sendCommand('DIAGNOSTIC TEST: ' + document.getElementById('drawer-asset-title').textContent)">
+          ⚡ INITIATE REMOTE DIAGNOSTIC CYCLE
+        </button>
+      </div>
+    </div>
+  </aside>
+
+  <!-- ===================================================================
+       5. EMERGENCY SIMULATION MODAL RUNNER
+       =================================================================== -->
+  <div class="sim-modal-overlay" id="sim-modal-overlay">
+    <div class="sim-modal">
+      <div class="drawer-header">
+        <div>
+          <div class="drawer-title" style="color: var(--indian-saffron);">🚨 EMERGENCY SIMULATION & DECISION SUPPORT</div>
+          <div style="font-size: 0.72rem; color: #94a3b8;">DEMONSTRATING END-TO-END AUTONOMOUS DIGITAL TWIN RESPONSE</div>
+        </div>
+        <button class="drawer-close" id="btn-close-sim">&times;</button>
+      </div>
+      <div class="drawer-body">
+        <div style="font-size: 0.8rem; color: #e2e8f0; line-height: 1.4;">
+          Select an Antarctic emergency scenario to trigger the autonomous digital twin workflow: sensor alert, audio klaxon, synthesized voice announcement, AI impact modeling, vehicle re-routing, and closed-loop command dispatch.
+        </div>
+
+        <!-- Scenario Selector Buttons -->
+        <div style="display: flex; gap: 8px; margin-top: 6px; flex-wrap: wrap;">
+          <button class="btn-tactical active" id="btn-start-scenario-1" style="border-color:#ef4444; color:#ffffff;">
+            1. Fuel Critical Drop & Resupply
+          </button>
+          <button class="btn-tactical" id="btn-start-scenario-2" style="border-color:#f59e0b; color:#ffffff;">
+            2. Katabatic Blizzard & Convoy Reroute
+          </button>
+          <button class="btn-tactical" id="btn-start-scenario-3" style="border-color:#38bdf8; color:#ffffff;">
+            3. Generator DG-1 Microgrid Failover
+          </button>
+        </div>
+
+        <!-- Live Step-by-Step Execution Sequence -->
+        <div class="sim-step-list" id="sim-step-list">
+          <div class="sim-step-item">
+            <div class="sim-step-icon">○</div>
+            <div>Ready to execute scenario. Click any scenario button above to begin live demonstration.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Application Scripts -->
+  <script src="js/telemetry.js"></script>
+  <script src="js/voiceAlerts.js"></script>
+  <script src="js/digitalTwin.js"></script>
+  <script src="js/polarMap.js"></script>
+  <script src="js/commandSystem.js"></script>
+  <script src="js/offlineSync.js"></script>
+  <script src="js/simulationEngine.js"></script>
+  <script src="js/omniQuery.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
